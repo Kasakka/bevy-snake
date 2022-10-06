@@ -130,21 +130,38 @@ fn spawn_snake(mut commands: Commands, mut segments: ResMut<SnakeSegments>) {
     ]);
 }
 
-fn spawn_food(mut commands: Commands) {
-    commands
-        .spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: FOOD_COLOR,
-                ..default()
-            },
-            ..default()
-        })
-        .insert(Food)
-        .insert(Position {
-            x: (random::<f32>() * ARENA_WIDTH as f32) as i32,
-            y: (random::<f32>() * ARENA_HEIGHT as f32) as i32,
-        })
-        .insert(Size::square(0.8));
+fn spawn_food(mut commands: Commands,
+              segments: ResMut<SnakeSegments>,
+              mut positions: Query<&mut Position>,) {
+    let mut food_pos = Position {
+        x: (random::<f32>() * ARENA_WIDTH as f32) as i32,
+        y: (random::<f32>() * ARENA_HEIGHT as f32) as i32,
+    };
+    let segment_positions = segments
+        .iter()
+        .map(|e| *positions.get_mut(*e).unwrap())
+        .collect::<Vec<Position>>();
+
+    for position in segment_positions.iter() {
+        if food_pos == *position {
+            food_pos = Position {
+                x: (random::<f32>() * ARENA_WIDTH as f32) as i32,
+                y: (random::<f32>() * ARENA_HEIGHT as f32) as i32,
+            }
+        } else {
+            commands
+                .spawn_bundle(SpriteBundle {
+                    sprite: Sprite {
+                        color: FOOD_COLOR,
+                        ..default()
+                    },
+                    ..default()
+                })
+                .insert(Food)
+                .insert(Position { x: food_pos.x, y: food_pos.y } )
+                .insert(Size::square(0.8));
+        }
+    }
 }
 
 fn spawn_segment(mut commands: Commands, position: Position) -> Entity {
